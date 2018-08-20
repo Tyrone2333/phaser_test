@@ -1,4 +1,4 @@
-import {animConfig,} from "../config/index"
+import {gameConfig,} from "../config/index"
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -13,10 +13,11 @@ class GameScene extends Phaser.Scene {
         this.bombs = {}
     }
 
-     init(data) {
+    init(data) {
         // data 是从this.scene.start('gameScene',{})传过来的
-         this.level = data.level
+        this.level = data.level
     }
+
     preload() {
 
         // 这是飞机
@@ -24,7 +25,6 @@ class GameScene extends Phaser.Scene {
         //     '../resource/image/plane_1.png',
         //     { frameWidth: 122, frameHeight: 95 }
         // )
-
 
     }
 
@@ -35,10 +35,11 @@ class GameScene extends Phaser.Scene {
 //      背景图像的大小为512 x 768像素，因此如果我们以0 x 0为中心显示它，只能看到它的右下角。
 //      如果我们以256, 384显示它，你会看到整个事物。
 //     this.add.image(256, 384, 'background')
+
+        // 天空背景
         this.add.image(0, 0, 'sky').setOrigin(0, 0)
-        this.add.sprite(50, this.sys.game.config.height / 4, "boom_small").setOrigin(0, 0).setScale(0.5);
 
-
+        // 添加文本对象
         this.scoreText = this.add.text(16, 16, 'score: 0', {fontSize: '32px', fill: 'gold'})
         this.timeText = this.add.text(
             16, /* x：游戏对象的x坐标 */
@@ -75,23 +76,6 @@ class GameScene extends Phaser.Scene {
         this.player.doubleJump = true
         this.player.doubleJumpCount = 0
 
-        // this.anims.create({
-        //     key: 'left',
-        //     frames: this.anims.generateFrameNumbers('link', {start: 0, end: 3}),
-        //     frameRate: 10,
-        //     repeat: -1
-        // })
-        // this.anims.create({
-        //     key: 'turn',
-        //     frames: [{key: 'link', frame: 4}],
-        //     frameRate: 20
-        // })
-        // this.anims.create({
-        //     key: 'right',
-        //     frames: this.anims.generateFrameNumbers('link', {start: 5, end: 8}),
-        //     frameRate: 10,
-        //     repeat: -1
-        // })
         this.anims.create({
             key: "left",
             frames: this.anims.generateFrameNumbers("link", {start: 10, end: 19}),
@@ -111,17 +95,18 @@ class GameScene extends Phaser.Scene {
             repeat: -1
         })
 
-
+        // 添加碰撞检测
         this.physics.add.collider(this.bombs, platforms)
         this.physics.add.collider(this.player, platforms)
         this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this)
         this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this)
         this.physics.add.collider(this.stars, platforms)
+
+        this.input.on("pointerdown",this.flyToMouse,this)
+
     }
 
     update() {
-
-
         if (this.gameOver) {
             return
         }
@@ -152,6 +137,7 @@ class GameScene extends Phaser.Scene {
         // if (cursors.up.isDown && this.player.doubleJumpCount) {
         //     this.player.setVelocityY(-330)
         // }
+
     }
 
     render() {
@@ -191,6 +177,22 @@ class GameScene extends Phaser.Scene {
         this.cameras.main.shake(500);
 
         this.gameOver = true
+
+    }
+
+    flyToMouse(){
+
+        this.tweens.add({
+            targets: [this.player],
+            x: this.input.x ,
+            y: this.input.y ,
+            callbackScope: this,
+            duration:1000,
+            onComplete: function (tween) {
+
+            },
+        })
+
 
     }
 

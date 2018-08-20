@@ -2,6 +2,7 @@ import 'phaser';
 
 import GameScene from './scene/GameScene'
 import LoadingScene from "./scene/loadingScene"
+import throwKnifeScene from "./scene/throwKnifeScene"
 
 const config = {
     // For more settings see <https://github.com/photonstorm/phaser/blob/master/src/boot/Config.js>
@@ -18,13 +19,14 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: {y: 800},
+            gravity: {y: 300},
             debug: true
         }
     },
     scene: [
         LoadingScene,
         GameScene,
+        // throwKnifeScene,
     ]
 };
 
@@ -37,23 +39,3 @@ const game = new Phaser.Game(config);
 //     game.events.emit('resize')
 // }
 
-// const  gameConfig = {
-//     type: Phaser.AUTO,
-//     parent: 'phaser-example',
-//     pixelArt: true,
-//     width: 800,
-//     height: 600,
-//     physics: {
-//         default: 'arcade',
-//         arcade: {
-//             gravity: {y: 300},
-//             debug: false
-//         }
-//     },
-//     scene: {
-//         preload: preload,
-//         // create: create,
-//         // update,
-//         // render
-//     }
-// }

@@ -92,14 +92,14 @@ export default class LoadingScene extends Phaser.Scene {
     }
 
     create() {
-        this.add.image(0, 0, 'logo').setOrigin(0, 0)
+        // this.add.image(0, 0, 'logo').setOrigin(0, 0)
         // log("loadingScene")
 
         // setTimeout( () => {
         this.scene.start('gameScene', {
             level: 3,
             difficult: "easy",
-        });
+        })
         // },2000)
 
 

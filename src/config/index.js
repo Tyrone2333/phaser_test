@@ -1,7 +1,7 @@
 
-import 'phaser';
+import 'phaser'
 
-var animConfig = {
+export const animConfig = {
     spriteSheet: {                                      // Spritesheet we're manipulating.
         key: 'link',
         frameWidth: 32,                                 // NOTE: Potential drawback. All frames are the same size.
@@ -12,4 +12,10 @@ var animConfig = {
         {key: 'walk-left', frameRate: 15, startFrame: 10, endFrame: 19},
         {key: 'walk-up', frameRate: 15, startFrame: 20, endFrame: 29}
     ]
-};
+}
+
+export const gameConfig = {
+    rotateSpeed : 5,
+    throwSpeed : 150,
+    minAngle : 10
+}
