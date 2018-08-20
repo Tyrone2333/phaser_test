@@ -1,10 +1,10 @@
-
 let gameConfig = {
-    rotateSpeed : 5,
-    throwSpeed : 150,
-    minAngle : 10
+    rotateSpeed: 5,
+    throwSpeed: 150,
+    minAngle: 10
 }
-class throwKnifeScene extends Phaser.Scene {
+
+export default class throwKnifeScene extends Phaser.Scene {
     constructor() {
         super({
             key: 'throwKnifeScene'
@@ -35,7 +35,7 @@ class throwKnifeScene extends Phaser.Scene {
         this.knifeGroup = this.add.group()
 
         this.canThrow = true
-        this.input.on("pointerdown",this.throwKnife,this)
+        this.input.on("pointerdown", this.throwKnife, this)
         // 扔飞镖 END
 
     }
@@ -45,12 +45,12 @@ class throwKnifeScene extends Phaser.Scene {
         // 扔飞镖
         this.target.angle += gameConfig.rotateSpeed
         let children = this.knifeGroup.getChildren()
-        for(var i=0;i< children.length;i++){
+        for (var i = 0; i < children.length; i++) {
             let child = children[i]
             child.angle += gameConfig.rotateSpeed
             let ang = Phaser.Math.DegToRad(child.angle)
-            child.x = this.target.x - Math.sin(ang) * this.target.width/4
-            child.y = this.target.y + Math.cos(ang) * this.target.width/4
+            child.x = this.target.x - Math.sin(ang) * this.target.width / 4
+            child.y = this.target.y + Math.cos(ang) * this.target.width / 4
         }
         // 扔飞镖 END
     }
@@ -69,29 +69,29 @@ class throwKnifeScene extends Phaser.Scene {
             onComplete: function (tween) {
                 let isLegal = true
                 let children = this.knifeGroup.getChildren()
-                for(var i=0;i<children.length;i++){
+                for (var i = 0; i < children.length; i++) {
                     let child = children[i]
-                    if(Math.abs(Phaser.Math.Angle.ShortestBetween(this.target.angle,child.impactAngle))<gameConfig.minAngle){
+                    if (Math.abs(Phaser.Math.Angle.ShortestBetween(this.target.angle, child.impactAngle)) < gameConfig.minAngle) {
                         isLegal = false
                         break
                     }
                 }
-                if(isLegal){
-                    this.canThrow =  true
-                    let newKnife = this.add.image(this.target.x,this.target.y+this.knife.height/8 * 3,"knife").setScale(0.5,0.5)
+                if (isLegal) {
+                    this.canThrow = true
+                    let newKnife = this.add.image(this.target.x, this.target.y + this.knife.height / 8 * 3, "knife").setScale(0.5, 0.5)
                     newKnife.impactAngle = this.target.angle
                     this.knifeGroup.add(newKnife)
-                    this.knife.y = this.sys.game.config.height/5 * 4
+                    this.knife.y = this.sys.game.config.height / 5 * 4
                 }
-                else{
+                else {
                     this.tweens.add({
                         targets: [this.knife],
-                        y: this.sys.game.config.height+this.knife.height,
+                        y: this.sys.game.config.height + this.knife.height,
                         rotation: 5,
-                        duration: gameConfig.throwSpeed*4,
+                        duration: gameConfig.throwSpeed * 4,
                         callbackScope: this,
-                        onComplete(tween){
-                            this.scene.start("playGame")
+                        onComplete(tween) {
+                            // this.scene.start("playGame")
                         }
                     })
                 }
@@ -101,4 +101,3 @@ class throwKnifeScene extends Phaser.Scene {
 
 }
 
-export default throwKnifeScene

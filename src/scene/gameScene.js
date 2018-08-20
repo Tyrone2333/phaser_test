@@ -1,6 +1,6 @@
 import {gameConfig,} from "../config/index"
 
-class GameScene extends Phaser.Scene {
+export default class GameScene extends Phaser.Scene {
     constructor() {
         super({
             key: 'gameScene'
@@ -20,14 +20,7 @@ class GameScene extends Phaser.Scene {
 
     preload() {
 
-        // 这是飞机
-        // this.load.spritesheet('player',
-        //     '../resource/image/plane_1.png',
-        //     { frameWidth: 122, frameHeight: 95 }
-        // )
-
     }
-
 
     create() {
         log("gameScene create")
@@ -61,18 +54,25 @@ class GameScene extends Phaser.Scene {
             repeat: 11,// 重复11次,得到12个
             setXY: {x: 12, y: 0, stepX: 70}
         })
-
         this.stars.children.iterate((child) => {
             child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8))
         })
+        // 生成coin
+        this.coins = this.physics.add.group()
+        for (let i = 0; i < 10; i++) {
+            let x = Phaser.Math.RND.between(0, 800)
+            let y = Phaser.Math.RND.between(0, 600)
 
-
+            let coin = this.coins.create(x, y, 'coin') // Add 'sprite' to the group
+            coin.play("cointurn")
+        }
         // this.player = this.physics.add.sprite(100, 300, 'dude')
         this.player = this.physics.add.sprite(500, 300, 'link')
 
         this.player.setBounce(0.2)  // 反弹系数
         this.player.setCollideWorldBounds(true) // 世界碰撞
         this.player.body.setGravityY(1)    //重力
+
         this.player.doubleJump = true
         this.player.doubleJumpCount = 0
 
@@ -95,22 +95,26 @@ class GameScene extends Phaser.Scene {
             repeat: -1
         })
 
+        this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+
         // 添加碰撞检测
         this.physics.add.collider(this.bombs, platforms)
         this.physics.add.collider(this.player, platforms)
         this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this)
         this.physics.add.collider(this.player, this.bombs, this.hitBomb, null, this)
         this.physics.add.collider(this.stars, platforms)
+        this.physics.add.collider(platforms, this.coins)
+        this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this)
 
-        this.input.on("pointerdown",this.flyToMouse,this)
+        // this.input.on("pointerdown",this.flyToMouse,this)
 
+        this.jumping = false;
     }
 
     update() {
         if (this.gameOver) {
             return
         }
-
 
         let cursors = this.input.keyboard.createCursorKeys()
         if (cursors.left.isDown) {
@@ -130,13 +134,35 @@ class GameScene extends Phaser.Scene {
             this.player.anims.play('turn')
         }
 
-        // 触地才允许跳跃
-        if (cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-330)
+
+        // Set a variable that is true when the player is touching the ground
+        var onTheGround = this.player.body.touching.down;
+
+        log(onTheGround)
+        // If the player is touching the ground, let him have 2 jumps
+        if (onTheGround) {
+            this.jumps = 2;
+            this.jumping = false;
         }
-        // if (cursors.up.isDown && this.player.doubleJumpCount) {
-        //     this.player.setVelocityY(-330)
+
+        // Jump!
+        if (this.jumps > 0 && this.upInputIsActive(5)) {
+            this.player.body.velocity.y = -330
+            this.jumping = true;
+        }
+
+        // Reduce the number of available jumps if the jump input is released
+        if (this.jumping && this.upInputReleased()) {
+            this.jumps--;
+            this.jumping = false;
+        }
+
+        // 触地才允许跳跃
+        // if (cursors.up.isDown && this.player.body.touching.down) {
+        //     this.player.setVelocityY(-300)
+        //     log(this.player.body)
         // }
+
 
     }
 
@@ -144,8 +170,30 @@ class GameScene extends Phaser.Scene {
         console.log(" render " + this)
     }
 
+    upInputIsActive(duration) {
+        var isActive = false;
+
+        isActive =Phaser.Input.Keyboard.DownDuration(Phaser.Input.Keyboard.KeyCodes.UP, duration);
+        // isActive |= (this.game.input.activePointer.justPressed(duration + 1000 / 60) &&
+        //     this.game.input.activePointer.x > this.game.width / 4 &&
+        //     this.game.input.activePointer.x < this.game.width / 2 + this.game.width / 4);
+
+        return isActive;
+    }
+
+// This function returns true when the player releases the "jump" control
+    upInputReleased() {
+        var released = false;
+
+        released = Phaser.Input.Keyboard.upDuration(Phaser.Input.Keyboard.KeyCodes.UP);
+        released |= this.game.input.activePointer.justReleased();
+
+        return released;
+    }
+
     collectStar(player, star) {
-        star.disableBody(true, true)
+        // this.stars.killAndHide(star) // 停用并隐藏该组的成员。
+        // this.stars.remove(star)    // 移除 star
 
         this.score += 10
         this.scoreText.setText('Score: ' + this.score)
@@ -156,10 +204,10 @@ class GameScene extends Phaser.Scene {
                 child.enableBody(true, child.x, 0, true, true)
             })
 
-            var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400)
+            let x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400)
 
-            var bomb = this.bombs.create(x, 16, 'bomb')
-            bomb.setBounce(1)
+            let bomb = this.bombs.create(x, 16, 'bomb')
+            bomb.setBounce(1)   // 碰撞
             bomb.setCollideWorldBounds(true)
             bomb.setVelocity(Phaser.Math.Between(-200, 200), 20)
             bomb.allowGravity = false
@@ -167,27 +215,38 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    collectCoin(player, coin) {
+        let x = Phaser.Math.RND.between(0, 800)
+        let y = Phaser.Math.RND.between(0, 200)
+
+        coin.x = x
+        coin.y = y
+        this.score += 50
+        this.scoreText.setText('Score: ' + this.score)
+
+    }
+
     hitBomb(player, bomb) {
 
         this.physics.pause()
         player.setTint(0xff0000)
-        // player.anims.play('turn')
+        player.anims.play('turn')
 
         // 镜头摇晃
-        this.cameras.main.shake(500);
+        this.cameras.main.shake(500)
 
         this.gameOver = true
 
     }
 
-    flyToMouse(){
+    flyToMouse() {
 
         this.tweens.add({
             targets: [this.player],
-            x: this.input.x ,
-            y: this.input.y ,
+            x: this.input.x,
+            y: this.input.y,
             callbackScope: this,
-            duration:1000,
+            duration: 1000,
             onComplete: function (tween) {
 
             },
@@ -198,4 +257,3 @@ class GameScene extends Phaser.Scene {
 
 }
 
-export default GameScene

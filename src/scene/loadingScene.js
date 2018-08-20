@@ -1,12 +1,14 @@
 export default class LoadingScene extends Phaser.Scene {
     constructor() {
         super({
-                key: 'loadingScene',
+            key: 'loadingScene',
+            pack: {
                 files: [
-                    // {type: 'image', key: 'logo', url: 'resource/image/gamelogo.png'},
+                    {type: 'image', key: 'loadingbar_bg', url: 'resource/image/loadingbar_bg.png'},
+                    {type: 'image', key: 'loadingbar_fill', url: 'resource/image/loadingbar_fill.png'}
                 ]
             },
-        );
+        })
     }
 
     preload() {
@@ -21,7 +23,8 @@ export default class LoadingScene extends Phaser.Scene {
         this.load.image('star', '../resource/image/star.png')
         this.load.image('bomb', '../resource/image/bomb.png')
         this.load.image('boom_small', '../resource/image/boom_small.png')
-
+        this.load.image('logo', 'resource/image/gamelogo.png');
+        this.load.image('sky', 'resource/image/sky.png');
 
         // 添加人物
         this.load.spritesheet('dude',
@@ -32,35 +35,14 @@ export default class LoadingScene extends Phaser.Scene {
             '../resource/image/link.png',
             {frameWidth: 32, frameHeight: 32}
         )
+        this.load.atlas('sprites', 'resource/image/spritearray.png', 'resource/image/spritearray.json');
 
-        this.load.image('logo', 'resource/image/gamelogo.png');
-        this.load.image('sky', 'resource/image/sky.png');
 
         // 创建进度条
-        this.add.sprite(0, 0, "logo").setOrigin(0, 0)
-        let progressBar = this.add.graphics()
-
         let width = this.cameras.main.width
         let height = this.cameras.main.height
-        let loadingText = this.make.text({
-            x: width / 2,
-            y: height / 2 - 50,
-            text: 'Loading...',
-            style: {
-                font: '20px monospace',
-                fill: '#ffffff'
-            }
-        })
-        let percentText = this.make.text({
-            x: width / 2,
-            y: height / 2 - 5,
-            text: '0%',
-            style: {
-                font: '18px monospace',
-                fill: '#ffffff'
-            }
-        })
-        let assetText = this.make.text({
+
+        this.assetText = this.make.text({
             x: width / 2,
             y: height / 2 + 50,
             text: '',
@@ -69,39 +51,76 @@ export default class LoadingScene extends Phaser.Scene {
                 fill: '#ffffff'
             }
         })
-        assetText.setOrigin(0.5, 0.5)
-        percentText.setOrigin(0.5, 0.5)
-        loadingText.setOrigin(0.5, 0.5)
+        this.assetText.setOrigin(0.5, 0.5)
 
-        this.load.on('progress', (value) => {
-            // 0 - 1 的完成进度
-            progressBar.clear()
-            progressBar.fillStyle(0xffffff, 1)
-            progressBar.fillRect(250, 280, 300 * value, 30)
-            percentText.setText(parseInt(value * 100) + '%')
-        })
-        this.load.on('fileprogress', (file) => {
-            assetText.setText('正在加载文件: ' + file.src)
-        })
         this.load.on('complete', () => {
             // loadingText.destroy()
             // percentText.destroy()
             // assetText.destroy()
         })
+        // 使用图片进度条
+        this.loadingbar_bg = this.add.sprite(400, 300, "loadingbar_bg");
+        this.loadingbar_fill = this.add.sprite(400, 300, "loadingbar_fill");
+        this.setPreloadSprite(this.loadingbar_fill);
         // 创建进度条 END
+
+
     }
 
     create() {
-        // this.add.image(0, 0, 'logo').setOrigin(0, 0)
-        // log("loadingScene")
-
-        // setTimeout( () => {
-        this.scene.start('gameScene', {
-            level: 3,
-            difficult: "easy",
+        // 创建翻转硬币的动画
+        this.anims.create({
+            key: 'cointurn',
+            frames: [
+                {key: 'sprites', frame: 'coin1'},
+                {key: 'sprites', frame: 'coin2'},
+                {key: 'sprites', frame: 'coin3'},
+                {key: 'sprites', frame: 'coin4'},
+                {key: 'sprites', frame: 'coin5'},
+                {key: 'sprites', frame: 'coin6'},
+                {key: 'sprites', frame: 'coin7'},
+                {key: 'sprites', frame: 'coin8'}
+            ],
+            frameRate: 15,
+            repeat: -1
         })
-        // },2000)
 
+        setTimeout(() => {
+            this.scene.start('gameScene', {
+                level: 3,
+                difficult: "easy",
+            })
+        }, 1000)
 
+    }
+
+    setPreloadSprite(sprite) {
+        this.preloadSprite = {sprite: sprite, width: sprite.width, height: sprite.height};
+
+        //sprite.crop(this.preloadSprite.rect);
+        sprite.visible = true;
+
+        // set callback for loading progress updates
+        this.load.on('progress', this.onProgress, this);
+        this.load.on('fileprogress', this.onFileProgress, this);
+    }
+
+    onProgress(value) {
+        if (this.preloadSprite) {
+            // calculate width based on value=0.0 .. 1.0
+            var w = Math.floor(this.preloadSprite.width * value);
+
+            // set width of sprite
+            this.preloadSprite.sprite.frame.width = w;
+            this.preloadSprite.sprite.frame.cutWidth = w;
+
+            // update screen
+            this.preloadSprite.sprite.frame.updateUVs();
+        }
+    }
+
+    onFileProgress(file) {
+        // debugger
+        this.assetText.setText('正在加载: ' + file.src);
     }
 }
