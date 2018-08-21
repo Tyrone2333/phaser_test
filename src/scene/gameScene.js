@@ -1,11 +1,24 @@
 import {gameConfig,} from "../config/index"
 
+const State = {
+    IDLE: 1,
+    JUMPING: 2,
+    DOUBLE_JUMPING: 4,
+    DEAD: 8,
+    WALKING_RIGHT: 16,
+    WALKING_LEFT: 32,
+    SHOOTING: 64
+}
+
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({
             key: 'gameScene'
         })
         this.player = {}
+        this.jumping = 0    // 跳跃中
+        this.numJumps = 0   // 可以跳跃的次数(二段跳)
+
         this.score = 0
         this.scoreText = ""
         this.gameOver = false
@@ -59,6 +72,7 @@ export default class GameScene extends Phaser.Scene {
         })
         // 生成coin
         this.coins = this.physics.add.group()
+
         for (let i = 0; i < 10; i++) {
             let x = Phaser.Math.RND.between(0, 800)
             let y = Phaser.Math.RND.between(0, 600)
@@ -66,9 +80,9 @@ export default class GameScene extends Phaser.Scene {
             let coin = this.coins.create(x, y, 'coin') // Add 'sprite' to the group
             coin.play("cointurn")
         }
+        // 添加玩家
         // this.player = this.physics.add.sprite(100, 300, 'dude')
-        this.player = this.physics.add.sprite(500, 300, 'link')
-
+        this.player = this.physics.add.sprite(600, 300, 'link')
         this.player.setBounce(0.2)  // 反弹系数
         this.player.setCollideWorldBounds(true) // 世界碰撞
         this.player.body.setGravityY(1)    //重力
@@ -83,7 +97,7 @@ export default class GameScene extends Phaser.Scene {
             repeat: -1
         })
         this.anims.create({
-            key: "right",
+            key: "jump",
             frames: this.anims.generateFrameNumbers("link", {start: 20, end: 29}),
             frameRate: 15,
             repeat: -1
@@ -94,6 +108,7 @@ export default class GameScene extends Phaser.Scene {
             frameRate: 15,
             repeat: -1
         })
+
 
         this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
 
@@ -106,9 +121,14 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.collider(platforms, this.coins)
         this.physics.add.overlap(this.player, this.coins, this.collectCoin, null, this)
 
-        // this.input.on("pointerdown",this.flyToMouse,this)
+        // 添加控制按键
+        this.keys = {
+            left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+            down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O),
+            right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+            up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.COMMA),   // ",键"
+        }
 
-        this.jumping = false;
     }
 
     update() {
@@ -116,53 +136,56 @@ export default class GameScene extends Phaser.Scene {
             return
         }
 
-        let cursors = this.input.keyboard.createCursorKeys()
-        if (cursors.left.isDown) {
+
+        // 二段跳
+        //  player 在地面上
+        this.touchingDown = this.player.body.onFloor() || this.player.body.touching.down
+        if (this.touchingDown) {
+            this.jumping = false
+            this.numJumps = 2
+        }
+        this.input.keyboard.on('keydown', (event) => {
+            // 如果使用 if (this.keys.up.isDown) 会一直设置 velocity.y
+            // 用 this.input.keyboard.on('keydown_COMMA', (event) => { }) 则设置一次就不会再执行
+            // 文档 https://photonstorm.github.io/phaser3-docs/Phaser.Input.Keyboard.KeyboardPlugin.html
+            // 监听的是原生  DOM Keyboard Events
+            if(event.keyCode === this.keys.up.keyCode){
+                if (this.numJumps > 0) {
+                    this.player.anims.play('jump', true)
+                    this.player.setVelocityY(-300)
+                    this.jumping = true
+                }
+            }
+        })
+        if (this.keys.up.isUp && !this.touchingDown) {
+            if (this.jumping) {
+                this.numJumps--
+                this.player.body.velocity.y *= 0.5
+                this.jumping = false
+            }
+        }
+        // 二段跳 END
+
+        if (this.keys.left.isDown) {
             this.player.setVelocityX(-160)
             this.player.flipX = false
             this.player.anims.play('left', true)
         }
-        else if (cursors.right.isDown) {
+        else if (this.keys.right.isDown) {
             this.player.setVelocityX(160)
             // 翻转 X ,动画执行 left
             this.player.flipX = true
             this.player.anims.play('left', true)
         }
+        // 触地才允许跳跃
+        // else if (this.keys.up.isDown && this.player.body.touching.down) {
+        //     this.player.setVelocityY(-300)
+        // }
         else {
             this.player.setVelocityX(0)
             this.player.flipX = false
             this.player.anims.play('turn')
         }
-
-
-        // Set a variable that is true when the player is touching the ground
-        var onTheGround = this.player.body.touching.down;
-
-        log(onTheGround)
-        // If the player is touching the ground, let him have 2 jumps
-        if (onTheGround) {
-            this.jumps = 2;
-            this.jumping = false;
-        }
-
-        // Jump!
-        if (this.jumps > 0 && this.upInputIsActive(5)) {
-            this.player.body.velocity.y = -330
-            this.jumping = true;
-        }
-
-        // Reduce the number of available jumps if the jump input is released
-        if (this.jumping && this.upInputReleased()) {
-            this.jumps--;
-            this.jumping = false;
-        }
-
-        // 触地才允许跳跃
-        // if (cursors.up.isDown && this.player.body.touching.down) {
-        //     this.player.setVelocityY(-300)
-        //     log(this.player.body)
-        // }
-
 
     }
 
@@ -170,26 +193,6 @@ export default class GameScene extends Phaser.Scene {
         console.log(" render " + this)
     }
 
-    upInputIsActive(duration) {
-        var isActive = false;
-
-        isActive =Phaser.Input.Keyboard.DownDuration(Phaser.Input.Keyboard.KeyCodes.UP, duration);
-        // isActive |= (this.game.input.activePointer.justPressed(duration + 1000 / 60) &&
-        //     this.game.input.activePointer.x > this.game.width / 4 &&
-        //     this.game.input.activePointer.x < this.game.width / 2 + this.game.width / 4);
-
-        return isActive;
-    }
-
-// This function returns true when the player releases the "jump" control
-    upInputReleased() {
-        var released = false;
-
-        released = Phaser.Input.Keyboard.upDuration(Phaser.Input.Keyboard.KeyCodes.UP);
-        released |= this.game.input.activePointer.justReleased();
-
-        return released;
-    }
 
     collectStar(player, star) {
         // this.stars.killAndHide(star) // 停用并隐藏该组的成员。
