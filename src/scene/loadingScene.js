@@ -5,7 +5,8 @@ export default class LoadingScene extends Phaser.Scene {
             pack: {
                 files: [
                     {type: 'image', key: 'loadingbar_bg', url: 'resource/image/loadingbar_bg.png'},
-                    {type: 'image', key: 'loadingbar_fill', url: 'resource/image/loadingbar_fill.png'}
+                    {type: 'image', key: 'loadingbar_fill', url: 'resource/image/loadingbar_fill.png'},
+                    {type: 'image', key: 'sky', url: 'resource/image/sky.png'},
                 ]
             },
         })
@@ -24,7 +25,7 @@ export default class LoadingScene extends Phaser.Scene {
         this.load.image('bomb', '../resource/image/bomb.png')
         this.load.image('boom_small', '../resource/image/boom_small.png')
         this.load.image('logo', 'resource/image/gamelogo.png');
-        this.load.image('sky', 'resource/image/sky.png');
+        // this.load.image('sky', 'resource/image/sky.png');
 
         // 添加人物
         this.load.spritesheet('dude',
@@ -37,11 +38,11 @@ export default class LoadingScene extends Phaser.Scene {
         )
         this.load.atlas('sprites', 'resource/image/spritearray.png', 'resource/image/spritearray.json');
 
-
-        // 创建进度条
+        // 添加加载背景
+        this.add.image(0,0,"sky").setOrigin(0,0)
+        // 文件加载信息
         let width = this.cameras.main.width
         let height = this.cameras.main.height
-
         this.assetText = this.make.text({
             x: width / 2,
             y: height / 2 + 50,
@@ -53,17 +54,16 @@ export default class LoadingScene extends Phaser.Scene {
         })
         this.assetText.setOrigin(0.5, 0.5)
 
-        this.load.on('complete', () => {
-            // loadingText.destroy()
-            // percentText.destroy()
-            // assetText.destroy()
-        })
         // 使用图片进度条
         this.loadingbar_bg = this.add.sprite(400, 300, "loadingbar_bg");
         this.loadingbar_fill = this.add.sprite(400, 300, "loadingbar_fill");
         this.setPreloadSprite(this.loadingbar_fill);
         // 创建进度条 END
-
+        this.load.on('complete', () => {
+            // loadingText.destroy()
+            // percentText.destroy()
+            // assetText.destroy()
+        })
 
     }
 

@@ -72,14 +72,13 @@ export default class GameScene extends Phaser.Scene {
         })
         // 生成coin
         this.coins = this.physics.add.group()
-
         for (let i = 0; i < 10; i++) {
             let x = Phaser.Math.RND.between(0, 800)
             let y = Phaser.Math.RND.between(0, 600)
-
             let coin = this.coins.create(x, y, 'coin') // Add 'sprite' to the group
             coin.play("cointurn")
         }
+
         // 添加玩家
         // this.player = this.physics.add.sprite(100, 300, 'dude')
         this.player = this.physics.add.sprite(600, 300, 'link')
@@ -110,8 +109,6 @@ export default class GameScene extends Phaser.Scene {
         })
 
 
-        this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
-
         // 添加碰撞检测
         this.physics.add.collider(this.bombs, platforms)
         this.physics.add.collider(this.player, platforms)
@@ -133,9 +130,19 @@ export default class GameScene extends Phaser.Scene {
 
     update() {
         if (this.gameOver) {
+            // 死亡动画
+            this.tweens.add({
+                targets: [this.player],
+                y: this.sys.game.config.height + this.player.height,
+                rotation: 5,
+                duration: 500,// 持续时间
+                callbackScope: this,
+                onComplete(tween) {
+                    // this.scene.start("playGame")
+                }
+            })
             return
         }
-
 
         // 二段跳
         //  player 在地面上
@@ -149,7 +156,7 @@ export default class GameScene extends Phaser.Scene {
             // 用 this.input.keyboard.on('keydown_COMMA', (event) => { }) 则设置一次就不会再执行
             // 文档 https://photonstorm.github.io/phaser3-docs/Phaser.Input.Keyboard.KeyboardPlugin.html
             // 监听的是原生  DOM Keyboard Events
-            if(event.keyCode === this.keys.up.keyCode){
+            if (event.keyCode === this.keys.up.keyCode) {
                 if (this.numJumps > 0) {
                     this.player.anims.play('jump', true)
                     this.player.setVelocityY(-300)
@@ -255,6 +262,10 @@ export default class GameScene extends Phaser.Scene {
             },
         })
 
+
+    }
+
+    gameOver() {
 
     }
 

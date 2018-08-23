@@ -21,9 +21,10 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: {y: 300},
-            debug: true
+            debug: true // 调试开启 arcade sprite 会有边框提示
         }
     },
+
     scene: [
         LoadingScene,
         GameScene,
